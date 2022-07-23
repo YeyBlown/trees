@@ -11,6 +11,8 @@ from entities.exceptions import (
 from models.schema import Post as SchemaPost
 from models.models import User as ModelUser
 
+from server.pkg.models.schema import PaginatedSearch, TreeSearch
+
 router = APIRouter(
     prefix="/post",
     tags=["post"],
@@ -59,3 +61,12 @@ def view():
     """returns all posts to see"""
     posts = DBFacade().get_all_posts()
     return posts
+
+
+# TODO
+@router.get("/search")
+def search(paginated_search: PaginatedSearch, tree_search: TreeSearch):
+    """returns paginated user models"""
+    # TODO: Bogdan: create in DBFacade search_trees method like search_users method, but for trees
+    users = DBFacade().search_users(query, search_by, page, page_size, sort_by, asc_order)
+    return users

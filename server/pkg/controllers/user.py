@@ -6,6 +6,8 @@ from services.token import TokenService
 from models.schema import User as SchemaUser
 from models.models import User as ModelUser
 
+from server.pkg.models.schema import PaginatedSearch
+
 router = APIRouter(
     prefix="/user",
     tags=["user"],
@@ -28,8 +30,9 @@ def view(page: int = 0, page_size: int = 10, sort_by: str = 'id', asc_order: boo
 
 
 @router.get("/search")
-def view(query: str, search_by: str = 'username', page: int = 0, page_size: int = 10, sort_by: str = 'id', asc_order: bool = True):
+def view(paginated_search: PaginatedSearch):
     """returns paginated user models"""
+    # TODO: Bogdan: utilize new search instead of old one
     users = DBFacade().search_users(query, search_by, page, page_size, sort_by, asc_order)
     return users
 

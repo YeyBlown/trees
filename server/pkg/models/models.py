@@ -1,6 +1,6 @@
 """ sql models with sqlalchemy """
 # pylint: disable=missing-function-docstring,missing-class-docstring
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Float, LargeBinary, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -9,17 +9,34 @@ from sqlalchemy.sql import func
 Base = declarative_base()
 
 
-class Post(Base):
-    __tablename__ = "post"
+class Tree(Base):
+    __tablename__ = "tree"
     id = Column(Integer, primary_key=True, index=True)
-    header = Column(String)
-    content = Column(String)
+
+    # location
+    location_lon = Column(Float)
+    location_lat = Column(Float)
+
+    tree_picture = Column(LargeBinary)
+
+    # static data on tree
+    registration_number = Column(String)
+    core_radius = Column(Integer)  # millimeters
+    creation_year = Column(Integer)
+    plant_type = Column(String)
+
+    # tree events
+    should_be_cut = Column(Boolean)
+    should_be_processed = Column(Boolean)
+    should_be_removed = Column(Boolean)
+
+    # technical for backend
     time_created = Column(DateTime(timezone=True), server_default=func.now())
+    creator_id = Column(Integer, ForeignKey("user.id"))
+    creator = relationship("User", back_populates="trees_created")
 
-    author_id = Column(Integer, ForeignKey("user.id"))
-    author = relationship("User", back_populates="posts_created")
-
-    likes = relationship("Like", back_populates="post")
+    # legacy
+    likes = relationship("Like", back_populates="tree")
 
 
 class User(Base):
@@ -38,7 +55,7 @@ class User(Base):
     time_last_activity = Column(DateTime(timezone=True), onupdate=func.now())
     time_last_login = Column(DateTime(timezone=True), onupdate=func.now())
 
-    posts_created = relationship("Post", back_populates="author")
+    trees_created = relationship("Tree", back_populates="creator")
 
     likes = relationship("Like", back_populates="user")
 
@@ -51,5 +68,5 @@ class Like(Base):
     user_id = Column(Integer, ForeignKey("user.id"))
     user = relationship("User", back_populates="likes")
 
-    post_id = Column(Integer, ForeignKey("post.id"))
-    post = relationship("Post", back_populates="likes")
+    tree_id = Column(Integer, ForeignKey("tree.id"))
+    tree = relationship("Tree", back_populates="likes")
