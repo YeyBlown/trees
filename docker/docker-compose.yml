@@ -2,9 +2,9 @@ version: "3.9"
 
 # TODO: move out env args
 services:
-  postgresql:
+  trees-postgresql:
     image: "postgres"
-    container_name: "pollos-demo-postgresql"
+    container_name: "pollos-trees-postgresql"
     ports:
       - "5432:5432"
     environment:
@@ -14,16 +14,16 @@ services:
       - /data\:/var/lib/postgresql/data
     networks:
       - backend
-  games-server:
-    image: "demo-server"
-    container_name: "pollos-demo-server"
+  trees-server:
+    image: "pollos-trees-server"
+    container_name: "pollos-trees-server"
     ports:
       - "8000:8000"
     networks:
       - backend
-  games-client:
-    image: "demo-client"
-    container_name: "pollos-demo-client"
+  trees-client:
+    image: "pollos-trees-client"
+    container_name: "pollos-trees-client"
     ports:
       - "3000:443"
     networks:

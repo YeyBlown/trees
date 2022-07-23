@@ -8,16 +8,18 @@ from sqlalchemy import and_, func, desc, asc
 
 from adapters.hash_utils import HashUtils
 from entities.exceptions import (
-    PostAlreadyLikedException,
-    PostIsNotLikedException,
+    TreeAlreadyLikedException,
+    TreeIsNotLikedException,
     ObjectDoesNotExistException,
     UsernameBusyException,
 )
 from models.models import User as ModelUser
-from models.models import Post as ModelPost
+from models.models import Tree as ModelTree
 from models.models import Like as ModelLike
 
-from models.schema import Post as SchemaPost
+from models.schema import TreeFull as SchemaTreeFull
+from models.schema import TreeCreate as SchemaTreeCreate
+from models.schema import TreeUpdate as SchemaTreeUpdate
 from models.schema import User as SchemaUser
 from services.datetimeservice import DateTimeService
 
@@ -100,24 +102,24 @@ class DBFacade:
         _UserDBAdapter.update_last_login(user)
 
     @lock_decorator(_lock)
-    def create_post(self, user: SchemaUser, post: SchemaPost, author_id):
-        """creates new post model by schema and stores it"""
-        post_db = _PostDBAdapter.create_post(post, author_id)
-        _UserDBAdapter.add_post_created(user, post_db)
+    def create_tree(self, user: SchemaUser, tree: SchemaTreeCreate, author_id):
+        """creates new tree model by schema and stores it"""
+        tree_db = _TreeDBAdapter.create_tree(tree, author_id)
+        _UserDBAdapter.add_tree_created(user, tree_db)
         _UserDBAdapter.update_last_activity(user)
-        return post_db
+        return tree_db
 
     @lock_decorator(_lock)
-    def get_all_posts(self):
+    def get_all_trees(self):
         """returns all user models"""
-        posts = _PostDBAdapter.get_all_posts()
-        return posts
+        trees = _TreeDBAdapter.get_all_trees()
+        return trees
 
     @lock_decorator(_lock)
-    def get_posts_by_user(self, user_id: int):
-        """returns all post models with matching authod_id"""
-        posts_by_user = _PostDBAdapter.get_posts_by_user(user_id)
-        return posts_by_user
+    def get_trees_by_user(self, user_id: int):
+        """returns all tree models with matching author_id"""
+        trees_by_user = _TreeDBAdapter.get_trees_by_user(user_id)
+        return trees_by_user
 
     @lock_decorator(_lock)
     def get_likes_by_user_date(
@@ -131,26 +133,26 @@ class DBFacade:
         return likes
 
     @lock_decorator(_lock)
-    def like(self, user: ModelUser, post_id: int):
-        """likes post for user"""
-        post = _PostDBAdapter.get_post_by_id(post_id)
-        if not post:
+    def like(self, user: ModelUser, tree_id: int):
+        """likes tree for user"""
+        tree = _TreeDBAdapter.get_tree_by_id(tree_id)
+        if not tree:
             raise ObjectDoesNotExistException()
-        like_db = _LikeDBAdapter.create(user, post)
+        like_db = _LikeDBAdapter.create(user, tree)
         _UserDBAdapter.add_like(user, like_db)
-        _PostDBAdapter.add_like(post, like_db)
+        _TreeDBAdapter.add_like(tree, like_db)
         _UserDBAdapter.update_last_activity(user)
         return like_db
 
     @lock_decorator(_lock)
-    def unlike(self, user: ModelUser, post_id: int):
-        """removes like made by user from post by post_id"""
-        post = _PostDBAdapter.get_post_by_id(post_id)
-        like = _LikeDBAdapter.get_like(user.id, post.id)
+    def unlike(self, user: ModelUser, tree_id: int):
+        """removes like made by user from tree by tree_id"""
+        tree = _TreeDBAdapter.get_tree_by_id(tree_id)
+        like = _LikeDBAdapter.get_like(user.id, tree.id)
         if not like:
-            raise PostIsNotLikedException()
+            raise TreeIsNotLikedException()
         _UserDBAdapter.remove_like(user, like)
-        _PostDBAdapter.remove_like(post, like)
+        _TreeDBAdapter.remove_like(tree, like)
         db.session.query(ModelLike).filter(and_(ModelLike.id == like.id)).delete()
         _UserDBAdapter.update_last_activity(user)
 
@@ -162,15 +164,15 @@ class DBFacade:
 
 class _UserDBAdapter:
     @staticmethod
-    def add_post_created(user: ModelUser, post: ModelPost):
-        """add given post to created by given user"""
-        user.posts_created.append(post)
+    def add_tree_created(user: ModelUser, tree: ModelTree):
+        """add given tree to created by given user"""
+        user.trees_created.append(tree)
         db.session.add(user)
         db.session.commit()
 
     @staticmethod
     def create_user(user: SchemaUser):
-        """creates and stores new user model by post schema"""
+        """creates and stores new user model by tree schema"""
         identical_user = (
             db.session.query(ModelUser).filter_by(username=user.username).first()
         )
@@ -181,11 +183,11 @@ class _UserDBAdapter:
         user_db = ModelUser(
             username=user.username,
             hashed_password=hashed_password,
-            name=user.name,
+            name=user.name,  # TODO: fill properly
             surname=user.surname,
             description=user.description,
             age=user.age,
-            posts_created=[],
+            trees_created=[],
             likes=[],
         )
         db.session.add(user_db)
@@ -236,64 +238,66 @@ class _UserDBAdapter:
         return users
 
 
-class _PostDBAdapter:
+class _TreeDBAdapter:
     @staticmethod
-    def create_post(post: SchemaPost, author_id):
-        """creates and stores new post model by post schema"""
-        post_db = ModelPost(
-            header=post.header, content=post.content, author_id=author_id
+    def create_tree(tree: SchemaTreeCreate, author_id):
+        """creates and stores new tree model by tree schema"""
+        tree_db = ModelTree(
+            header=tree.header,  # TODO: fill properly
+            content=tree.content,
+            author_id=author_id
         )
-        db.session.add(post_db)
+        db.session.add(tree_db)
         db.session.commit()
-        return post_db
+        return tree_db
 
     @staticmethod
-    def get_post_by_id(post_id: int):
-        """returns post by post_id"""
-        post = db.session.query(ModelPost).filter_by(id=post_id).first()
-        if not post:
+    def get_tree_by_id(tree_id: int):
+        """returns tree by tree_id"""
+        tree = db.session.query(ModelTree).filter_by(id=tree_id).first()
+        if not tree:
             raise ObjectDoesNotExistException()
-        return post
+        return tree
 
     @staticmethod
-    def get_all_posts():
-        """returns all posts"""
-        posts = db.session.query(ModelPost).all()
-        return posts
+    def get_all_trees():
+        """returns all trees"""
+        trees = db.session.query(ModelTree).all()
+        return trees
 
     @staticmethod
-    def get_posts_by_user(user_id: int):
-        """returns all posts created by user"""
-        posts = db.session.query(ModelPost).filter_by(author_id=user_id)
-        return posts
+    def get_trees_by_user(user_id: int):
+        """returns all trees created by user"""
+        trees = db.session.query(ModelTree).filter_by(author_id=user_id)
+        return trees
 
     @staticmethod
-    def add_like(post: ModelPost, like: ModelLike):
-        """adds given like to post"""
-        post.likes.append(like)
+    def add_like(tree: ModelTree, like: ModelLike):
+        """adds given like to tree"""
+        tree.likes.append(like)
         db.session.add(like)
         db.session.commit()
 
     @staticmethod
-    def remove_like(post: ModelPost, like: ModelLike):
-        """remove given like from post"""
-        post.likes.remove(like)
-        db.session.add(post)
+    def remove_like(tree: ModelTree, like: ModelLike):
+        """remove given like from tree"""
+        tree.likes.remove(like)
+        db.session.add(tree)
         db.session.commit()
 
 
 class _LikeDBAdapter:
     @staticmethod
-    def create(user: ModelUser, post: ModelPost):
-        """creates new like from user to post"""
-        if _LikeDBAdapter.is_like_exists(user.id, post.id):
-            raise PostAlreadyLikedException()
+    def create(user: ModelUser, tree: ModelTree):
+        """creates new like from user to tree"""
+        if _LikeDBAdapter.is_like_exists(user.id, tree.id):
+            raise TreeAlreadyLikedException()
         time_created = DateTimeService.get_today_datetime()
         like_db = ModelLike(
             user_id=user.id,
-            post_id=post.id,
+            tree_id=tree.id,
             user=user,
-            post=post,
+            tree=tree,
             time_created=time_created,
         )
         db.session.add(like_db)
@@ -301,20 +305,20 @@ class _LikeDBAdapter:
         return like_db
 
     @staticmethod
-    def is_like_exists(user_id: id, post_id: id):
+    def is_like_exists(user_id: id, tree_id: id):
         """return True if like exists else False"""
         try:
-            _LikeDBAdapter.get_like(user_id, post_id)
+            _LikeDBAdapter.get_like(user_id, tree_id)
             return True
         except ObjectDoesNotExistException:
             return False
 
     @staticmethod
-    def get_like(user_id: id, post_id: id):
-        """returns like by user_id and post_id"""
+    def get_like(user_id: id, tree_id: id):
+        """returns like by user_id and tree_id"""
         like = (
             db.session.query(ModelLike)
-            .filter(and_(ModelLike.user_id == user_id, ModelLike.post_id == post_id))
+            .filter(and_(ModelLike.user_id == user_id, ModelLike.tree_id == tree_id))
             .first()
         )
         if not like:

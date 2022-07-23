@@ -4,39 +4,39 @@ from fastapi import APIRouter, Depends
 from adapters.db import DBFacade
 from services.token import TokenService
 from entities.exceptions import (
-    PostAlreadyLikedException,
-    PostIsNotLikedException,
+    TreeAlreadyLikedException,
+    TreeIsNotLikedException,
     ObjectDoesNotExistException,
 )
-from models.schema import Post as SchemaPost
+from models.schema import TreeCreate as SchemaTree
 from models.models import User as ModelUser
 
 from server.pkg.models.schema import PaginatedSearch, TreeSearch
 
 router = APIRouter(
-    prefix="/post",
-    tags=["post"],
+    prefix="/tree",
+    tags=["tree"],
     responses={404: {"description": "Not found"}},
 )
 
 
-@router.post("/create", response_model=SchemaPost)
+@router.post("/create", response_model=SchemaTree)
 async def create(
-    post: SchemaPost, current_user: ModelUser = Depends(TokenService.get_current_user)
+    tree: SchemaTree, current_user: ModelUser = Depends(TokenService.get_current_user)
 ):
     """creates new post by schema"""
-    db_post = DBFacade().create_post(current_user, post, current_user.id)
+    db_post = DBFacade().create_post(current_user, tree, current_user.id)
     return db_post
 
 
 @router.post("/like")
 async def like(
-    post_id: int, current_user: ModelUser = Depends(TokenService.get_current_user)
+    tree_id: int, current_user: ModelUser = Depends(TokenService.get_current_user)
 ):
     """likes post as current_user by post_id"""
     try:
-        like_db = DBFacade().like(current_user, post_id)
-    except PostAlreadyLikedException:
+        like_db = DBFacade().like(current_user, tree_id)
+    except TreeAlreadyLikedException:
         return {"error": "already liked"}
     except ObjectDoesNotExistException:
         return {"error": "post does not exist"}
@@ -45,21 +45,21 @@ async def like(
 
 @router.post("/unlike")
 async def unlike(
-    post_id: int, current_user: ModelUser = Depends(TokenService.get_current_user)
+    tree_id: int, current_user: ModelUser = Depends(TokenService.get_current_user)
 ):
     """removes like as current_user by post_id"""
     try:
-        DBFacade().unlike(current_user, post_id)
-    except PostIsNotLikedException:
-        return {"error": "not yet liked liked"}
+        DBFacade().unlike(current_user, tree_id)
+    except TreeIsNotLikedException:
+        return {"error": "tree not yet liked"}
     except ObjectDoesNotExistException:
-        return {"error": "post does not exist"}
+        return {"error": "tree does not exist"}
 
 
-@router.get("/view")
+@router.get("/get_all")
 def view():
     """returns all posts to see"""
-    posts = DBFacade().get_all_posts()
+    posts = DBFacade().get_all_trees()
     return posts
 
 

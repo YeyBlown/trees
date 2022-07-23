@@ -2,6 +2,7 @@
 # pylint: disable=no-name-in-module,no-self-argument
 # pylint: disable=missing-function-docstring,missing-class-docstring
 import datetime
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel
@@ -35,9 +36,7 @@ class Like(BaseModel):
         orm_mode = True
 
 
-class TreeFull(BaseModel):
-    id: int = None  # TODO: rework to pydantic Fields
-
+class TreeCreate(BaseModel):
     # location
     location_lon: float
     location_lat: float
@@ -58,6 +57,18 @@ class TreeFull(BaseModel):
     # technical for backend
     time_created: datetime.datetime
     creator_id: int
+
+    class Config:
+        orm_mode = True
+
+
+class TreeUpdate(TreeCreate):
+    id: int
+
+
+class TreeFull(TreeCreate):
+    id: int
+
     creator: User
 
     # legacy
@@ -88,3 +99,8 @@ class PaginatedSearch(BaseModel):
     page_size: int = 10
     sort_by: str = 'id'
     asc_order: bool = True
+
+
+class Roles(Enum):
+    BASIC_ROLE = 0
+    ADMIN_ROLE = 1

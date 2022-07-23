@@ -1,11 +1,11 @@
 """utility internal exceptions"""
 
 
-class PostAlreadyLikedException(BaseException):
+class TreeAlreadyLikedException(BaseException):
     """exception that occurs trying to like post that you have already liked"""
 
 
-class PostIsNotLikedException(BaseException):
+class TreeIsNotLikedException(BaseException):
     """exception that occurs trying to unlike post that you have not liked"""
 
 
