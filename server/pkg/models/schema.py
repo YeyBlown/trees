@@ -102,4 +102,4 @@ class PaginatedSearch(BaseModel):
 class Roles(Enum):
     BASIC_ROLE = 0
     ADMIN_ROLE = 1
-    SUPERADMIN_ROLE = 2
+    SUPER_ADMIN_ROLE = 2
