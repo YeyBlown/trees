@@ -67,6 +67,5 @@ def view():
 @router.get("/search")
 def search(paginated_search: PaginatedSearch, tree_search: TreeSearch):
     """returns paginated user models"""
-    # TODO: Bogdan: create in DBFacade search_trees method like search_users method, but for trees
-    users = DBFacade().search_users(query, search_by, page, page_size, sort_by, asc_order)
+    users = DBFacade().search_trees(paginated_search, tree_search)
     return users

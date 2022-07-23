@@ -92,7 +92,7 @@ class TreeSearch(BaseModel):
 
 class PaginatedSearch(BaseModel):
     query: str
-    search_by: str = 'username'
+    search_by: str = 'username'  # TODO: update to use this in search, please
     page: int = 0
     page_size: int = 10
     sort_by: str = 'id'

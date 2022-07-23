@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware #cors
 
 from adapters.contract import PostgresEnv, AppEnv
 
-from controllers import auth, post, api, user
+from controllers import auth, tree, api, user
 
 
 app = FastAPI()
@@ -22,7 +22,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
-app.include_router(post.router)
+app.include_router(tree.router)
 app.include_router(api.router)
 app.include_router(user.router)
 

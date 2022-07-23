@@ -11,3 +11,8 @@ fmt.fix:
 
 lint:
 	pylint ./pkg --rcfile .pylintrc
+
+db.upgrade:
+	# TODO: add to server script(docker image) or create separate
+	psql -c 'create database maindb;' postgresql://myusername:mypassword@localhost:5432 || true
+	alembic upgrade head

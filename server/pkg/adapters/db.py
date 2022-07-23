@@ -17,8 +17,10 @@ from models.models import User as ModelUser
 from models.models import Tree as ModelTree
 from models.models import Like as ModelLike
 
+from models.schema import PaginatedSearch
 from models.schema import TreeFull as SchemaTreeFull
 from models.schema import TreeCreate as SchemaTreeCreate
+from models.schema import TreeSearch as SchemaTreeSearch
 from models.schema import TreeUpdate as SchemaTreeUpdate
 from models.schema import User as SchemaUser
 from services.datetimeservice import DateTimeService
@@ -79,9 +81,15 @@ class DBFacade:
         return users
 
     @lock_decorator(_lock)
-    def search_users(self, query, search_by, page, page_size, sort_by, asc_order):
-        """returns all user models"""
-        users = _UserDBAdapter.search_paginated_users(query, search_by, page, page_size, sort_by, asc_order)
+    def search_users(self, paginated_search: PaginatedSearch):
+        """returns paginated user models"""
+        users = _UserDBAdapter.search_paginated_users(paginated_search)
+        return users
+
+    @lock_decorator(_lock)
+    def search_trees(self, paginated_search: PaginatedSearch, tree_search: SchemaTreeSearch):
+        """returns paginated tree models"""
+        users = _TreeDBAdapter.search_paginated_trees(paginated_search, tree_search)
         return users
 
     @lock_decorator(_lock)
@@ -229,10 +237,10 @@ class _UserDBAdapter:
         return users
 
     @staticmethod
-    def search_paginated_users(query, search_by, page, page_size, sort_by, asc_order):
-        users = db.session.query(ModelUser).filter(ModelUser.username.regexp_match(query)).\
-            order_by(asc(sort_by) if asc_order else desc(sort_by)).\
-            limit(page_size).offset(page * page_size).all()
+    def search_paginated_users(paginated_search: PaginatedSearch):
+        users = db.session.query(ModelUser).filter(ModelUser.username.regexp_match(paginated_search.query)).\
+            order_by(asc(paginated_search.sort_by) if paginated_search.asc_order else desc(paginated_search.sort_by)).\
+            limit(paginated_search.page_size).offset(paginated_search.page * paginated_search.page_size).all()
         return users
 
 
@@ -256,6 +264,17 @@ class _TreeDBAdapter:
         db.session.add(tree_db)
         db.session.commit()
         return tree_db
+
+    @staticmethod
+    def search_paginated_trees(paginated_search: PaginatedSearch, tree_search: SchemaTreeSearch):
+        """returns all trees by coordinates. Paginated and sorted"""
+        # TODO: find by coordinates
+        # TODO: utilize tree search(tree details, flags, etc.)
+        # TODO: do i need this fucking regex?
+        trees = db.session.query(ModelTree).filter(ModelTree.username.regexp_match(paginated_search.query)).\
+            order_by(asc(paginated_search.sort_by) if paginated_search.asc_order else desc(paginated_search.sort_by)).\
+            limit(paginated_search.page_size).offset(paginated_search.page * paginated_search.page_size).all()
+        return trees
 
     @staticmethod
     def get_tree_by_id(tree_id: int):

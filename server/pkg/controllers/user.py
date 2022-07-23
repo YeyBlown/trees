@@ -32,8 +32,7 @@ def view(page: int = 0, page_size: int = 10, sort_by: str = 'id', asc_order: boo
 @router.get("/search")
 def view(paginated_search: PaginatedSearch):
     """returns paginated user models"""
-    # TODO: Bogdan: utilize new search instead of old one
-    users = DBFacade().search_users(query, search_by, page, page_size, sort_by, asc_order)
+    users = DBFacade().search_users(paginated_search)
     return users
 
 

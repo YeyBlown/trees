@@ -4,7 +4,7 @@ version: "3.9"
 services:
   trees-postgresql:
     image: "postgres"
-    container_name: "pollos-trees-postgresql"
+    container_name: "trees-postgresql"
     ports:
       - "5432:5432"
     environment:
@@ -16,14 +16,14 @@ services:
       - backend
   trees-server:
     image: "pollos-trees-server"
-    container_name: "pollos-trees-server"
+    container_name: "trees-server"
     ports:
       - "8000:8000"
     networks:
       - backend
   trees-client:
     image: "pollos-trees-client"
-    container_name: "pollos-trees-client"
+    container_name: "trees-client"
     ports:
       - "3000:443"
     networks:
