@@ -7,13 +7,15 @@ import icon from "./constants";
 import "../App.css";
 import { useRef } from "react";
 
+// const [markers, setMarkers] = useState([]);
+
 function onClick(e) {
   <Popup>Smth</Popup>;
 }
 
-const Huita = (lat, lng) => {
+const CreateMarker = (lat, lng) => {
   return (
-    <Marker position={[lat, lng]}>
+    <Marker key={Math.random()} position={[lat, lng]}>
       <Popup>
         <div className="">
           <div>
@@ -84,10 +86,13 @@ const LocationMarkers = () => {
     click: (e) => {
       map.locate();
       const { lat, lng } = e.latlng;
-      const newMarker = Huita(lat, lng);
-      const markers = new L.FeatureGroup().addTo(map);;
-      const marker = L.marker([lat, lng]).addTo(map);
-      marker.bindPopup("qeqeqeqeq"); // it works but it is not good
+      const newMarker = CreateMarker(lat, lng);
+      //   const markers = new L.FeatureGroup().addTo(map);
+
+      //   newMarker(setMarkers)
+
+      //   const marker = L.marker([lat, lng]).addTo(map);
+      //   marker.bindPopup("qeqeqeqeq"); // it works but it is not good
       console.log("You clicked the map at LAT: " + lat + " and LONG: " + lng);
     },
     locationfound: (location) => {
@@ -98,7 +103,7 @@ const LocationMarkers = () => {
   return null;
 };
 
-export default LocationMarkers;
+export default CreateMarker;
 
 // import React from "react";
 
