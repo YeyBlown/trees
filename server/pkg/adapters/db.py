@@ -77,10 +77,16 @@ class DBFacade:
         return users
 
     @lock_decorator(_lock)
+    def search_trees(self, paginated_search):
+        """returns all user models"""
+        users = _UserDBAdapter.search_paginated_trees(paginated_search)
+        return users
+
+    @lock_decorator(_lock)
     def search_users(self, query, search_by, page, page_size, sort_by, asc_order):
         """returns all user models"""
-        users = _UserDBAdapter.search_paginated_users(query, search_by, page, page_size, sort_by, asc_order)
-        return users
+        trees = _UserDBAdapter.search_paginated_users(query, search_by, page, page_size, sort_by, asc_order)
+        return trees
 
     @lock_decorator(_lock)
     def create_user(self, user: SchemaUser):
