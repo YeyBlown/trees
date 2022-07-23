@@ -46,7 +46,7 @@ class User(Base):
     username = Column(String, unique=True, nullable=False)
     hashed_password = Column(String, nullable=False)
 
-    full_name = Column(String, nullable=False)
+    nickname = Column(String, nullable=False)
     role = Column(Integer, nullable=False)
 
     time_created = Column(DateTime(timezone=True), server_default=func.now())

@@ -183,10 +183,8 @@ class _UserDBAdapter:
         user_db = ModelUser(
             username=user.username,
             hashed_password=hashed_password,
-            name=user.name,  # TODO: fill properly
-            surname=user.surname,
-            description=user.description,
-            age=user.age,
+            nickname=user.nickname,
+            role=user.role,
             trees_created=[],
             likes=[],
         )
@@ -240,12 +238,20 @@ class _UserDBAdapter:
 
 class _TreeDBAdapter:
     @staticmethod
-    def create_tree(tree: SchemaTreeCreate, author_id):
+    def create_tree(tree: SchemaTreeCreate, creator_id):
         """creates and stores new tree model by tree schema"""
         tree_db = ModelTree(
-            header=tree.header,  # TODO: fill properly
-            content=tree.content,
-            author_id=author_id
+            location_lon=tree.location_lon,
+            location_lat=tree.location_lat,
+            tree_picture=tree.tree_picture,
+            registration_number=tree.registration_number,
+            core_radius=tree.core_radius,
+            creation_year=tree.creation_year,
+            plant_type=tree.plant_type,
+            should_be_cut=tree.should_be_cut,
+            should_be_processed=tree.should_be_processed,
+            should_be_removed=tree.should_be_removed,
+            creator_id=creator_id
         )
         db.session.add(tree_db)
         db.session.commit()
