@@ -235,11 +235,11 @@ class _UserDBAdapter:
         return users
 
     @staticmethod
-    def search_paginated_users(query, search_by, page, page_size, sort_by, asc_order):
-        users = db.session.query(ModelUser).filter(ModelUser.username.regexp_match(query)).\
-            order_by(asc(sort_by) if asc_order else desc(sort_by)).\
-            limit(page_size).offset(page * page_size).all()
-        return users
+    def search_paginated_trees(paginated_search):
+        trees = db.session.query(ModelUser).filter(ModelUser.username.regexp_match(paginated_search.query)).\
+            order_by(asc(paginated_search.sort_by) if paginated_search.asc_order else desc(paginated_search.sort_by)).\
+            limit(paginated_search.page_size).offset(paginated_search.page * paginated_search.page_size).all()
+        return trees
 
 
 class _PostDBAdapter:
