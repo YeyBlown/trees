@@ -2,6 +2,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, create_engine
 from sqlalchemy import pool
+from sqlalchemy_utils import database_exists, create_database
 
 from alembic import context
 
@@ -38,17 +39,19 @@ fileConfig(config.config_file_name)
 target_metadata = Base.metadata
 
 postgres_uri = PostgresEnv.get_url()
-postgres_uri = '/'.join(postgres_uri.split('/')[:-1])
+# postgres_uri = '/'.join(postgres_uri.split('/')[:-1])
 print(f'clean_uri: {postgres_uri}')
 engine = create_engine(postgres_uri)
-conn = engine.connect()
+# conn = engine.connect()
 try:
-    conn.execute(f"CREATE DATABASE {PostgresEnv.get_database()}")
+    # conn.execute(f"CREATE DATABASE {PostgresEnv.get_url()}")
+    if not database_exists(engine.url):
+        create_database(engine.url)
+    print(f"db exists: {database_exists(engine.url)}")
 except Exception as e:
     print('wtf creatin db exception')
     print(e, end='\n________-\n')
-finally:
-    conn.close()
+
 try:
     print('is there success')
     postgres_uri = PostgresEnv.get_url()
