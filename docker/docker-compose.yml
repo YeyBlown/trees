@@ -17,6 +17,8 @@ services:
   trees-server:
     image: "pollos-trees-server"
     container_name: "trees-server"
+    depends_on:
+      - trees-postgresql
     ports:
       - "8000:8000"
     networks:
