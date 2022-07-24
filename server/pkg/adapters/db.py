@@ -6,6 +6,7 @@ from typing import Optional
 from fastapi_sqlalchemy import db
 from sqlalchemy import and_, func, desc, asc
 
+from adapters.contract import PostgresEnv
 from adapters.hash_utils import HashUtils
 from entities.exceptions import (
     TreeAlreadyLikedException,
@@ -24,6 +25,9 @@ from models.schema import TreeSearch as SchemaTreeSearch
 from models.schema import TreeUpdate as SchemaTreeUpdate
 from models.schema import User as SchemaUser
 from services.datetimeservice import DateTimeService
+
+
+from sqlalchemy import create_engine
 
 
 class DBFacade:
@@ -245,6 +249,9 @@ class _UserDBAdapter:
 
 
 class _TreeDBAdapter:
+
+    engine = create_engine(PostgresEnv.get_url())
+
     @staticmethod
     def create_tree(tree: SchemaTreeCreate, creator_id):
         """creates and stores new tree model by tree schema"""
@@ -309,6 +316,21 @@ class _TreeDBAdapter:
         tree.likes.remove(like)
         db.session.add(tree)
         db.session.commit()
+
+    @staticmethod
+    def get_nearest_trees_cursor(tree_search: SchemaTreeSearch):
+        lat, lng, range = tree_search.location_lat, tree_search.location_lon, tree_search.search_radius
+        trees = _TreeDBAdapter.engine.execute(
+            f'SELECT * FROM getTreesGeo({str(lat)[:12]}, {str(lng)[:12]}, {range})'
+        )
+        return trees
+
+    @staticmethod
+    def remove_all_trees():
+        res = _TreeDBAdapter.engine.execute(
+            f'DELETE FROM tree;'
+        )
+        return res
 
 
 class _LikeDBAdapter:

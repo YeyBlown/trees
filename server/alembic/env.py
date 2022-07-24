@@ -14,6 +14,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(BASE_DIR, "pkg/local.env"))
 sys.path.append(BASE_DIR)
 
+print(f'base dir: {BASE_DIR}')
+
 from pkg.adapters.contract import PostgresEnv
 from pkg.models.models import Base
 
@@ -44,7 +46,64 @@ try:
     conn.execute(f"CREATE DATABASE IF NOT EXISTS {PostgresEnv.get_database()}")
 except:
     pass
-conn.close()
+finally:
+    conn.close()
+try:
+    print('is there success')
+    postgres_uri = PostgresEnv.get_url()
+    engine = create_engine(postgres_uri)
+    conn = engine.connect()
+    print('maybe')
+    conn.execute("""
+DROP FUNCTION IF EXISTS getTreesGeo;
+CREATE FUNCTION getTreesGeo(Lat float, Lng float, Range float)
+RETURNS TABLE (
+    id int,
+    location_lon float,
+    location_lat float
+)
+language plpgsql
+AS
+$$
+-- Returns the trees in range.
+BEGIN
+    RETURN query (
+        SELECT 
+            tree.id,
+            tree.location_lat,
+            tree.location_lon
+        FROM tree
+        GROUP BY tree.id
+        HAVING (
+           111.111 *
+           DEGREES(
+               acos(cos(radians(Lat)) * 
+               cos(radians(tree.location_lat)) * 
+               cos(radians(Lng - tree.location_lon)) + 
+               sin(radians(Lat)) * 
+               sin(radians(tree.location_lat )))
+           )
+        ) < Range 
+        ORDER BY (
+           111.111 *
+           DEGREES(
+               acos(cos(radians(Lat)) * 
+               cos(radians(tree.location_lat)) * 
+               cos(radians(Lng - tree.location_lon)) + 
+               sin(radians(Lat)) * 
+               sin(radians(tree.location_lat )))
+           )
+        )
+    );
+END;
+$$;
+    """)
+    print('fucking success')
+except BaseException as e:
+    print('omg')
+    print(e)
+finally:
+    conn.close()
 
 
 # other values from the config, defined by the needs of env.py,

@@ -42,7 +42,7 @@ class TokenService:
         return encoded_jwt
 
     @staticmethod
-    def get_current_user(token: str = Depends(oauth2_scheme)):
+    def get_current_user(token: str = Depends(oauth2_scheme), roles_with_access=(0, 1, 2)):
         """returns current user from DB by token"""
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -61,4 +61,6 @@ class TokenService:
         user = DBFacade().get_user_by_username(username)
         if user is None:
             raise credentials_exception
+        if user.role not in roles_with_access:
+            raise UserIsNotPermittedException
         return user

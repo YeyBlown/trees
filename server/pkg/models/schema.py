@@ -84,8 +84,8 @@ class Token(BaseModel):
 class TreeSearch(BaseModel):
 
     # location
-    location_lon: float
     location_lat: float
+    location_lon: float
 
     search_radius: float
 
@@ -102,3 +102,4 @@ class PaginatedSearch(BaseModel):
 class Roles(Enum):
     BASIC_ROLE = 0
     ADMIN_ROLE = 1
+    SUPERADMIN_ROLE = 2
