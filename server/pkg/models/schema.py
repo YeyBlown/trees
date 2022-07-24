@@ -1,6 +1,10 @@
 """ objects schema by pydantic """
 # pylint: disable=no-name-in-module,no-self-argument
 # pylint: disable=missing-function-docstring,missing-class-docstring
+import datetime
+from enum import Enum
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -15,13 +19,22 @@ class Post(BaseModel):
 class User(BaseModel):
     username: str
     hashed_password: str
-    name: str
-    surname: str
-    description: str = None
-    age: int
+    nickname: str
+    role: int
 
     class Config:
         orm_mode = True
+
+
+class UserWithId(BaseModel):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
+class UserWithId(User):
+    id: int
 
 
 class Like(BaseModel):
@@ -32,6 +45,74 @@ class Like(BaseModel):
         orm_mode = True
 
 
+class TreeCreate(BaseModel):
+    # location
+    location_lon: float
+    location_lat: float
+
+    # static data on tree
+    core_radius: int  # millimeters
+    creation_year: int
+    plant_type: str
+
+    # technical for backend
+    creator_id: int
+
+    class Config:
+        orm_mode = True
+
+
+class TreeClient(TreeCreate):
+
+    registration_number: Optional[str] = None
+
+    # tree events
+    should_be_cut: bool = False
+    should_be_processed: bool = False
+    should_be_removed: bool = False
+
+
+class TreeUpdate(TreeClient):
+    id: int
+
+
+class TreeFull(TreeUpdate):
+    tree_picture: None  # TODO!
+
+    creator: User
+
+    # legacy
+    likes: list[Like]
+
+    class Config:
+        orm_mode = True
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+class TreeSearch(BaseModel):
+
+    # location
+    location_lat: float
+    location_lon: float
+
+    search_radius: float
+
+
+class PaginatedSearch(BaseModel):
+    query: str
+    search_by: str = 'username'  # TODO: update to use this in search, please
+    page: int = 0
+    page_size: int = 10
+    sort_by: str = 'id'
+    asc_order: bool = True
+    ignore_pagination = False
+
+
+class Roles(Enum):
+    BASIC_ROLE = 0
+    ADMIN_ROLE = 1
+    SUPER_ADMIN_ROLE = 2

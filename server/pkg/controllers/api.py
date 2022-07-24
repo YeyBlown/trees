@@ -45,3 +45,10 @@ def get_all_likes():
     """returns all likes"""
     likes = DBFacade.get_all_likes()
     return likes
+
+
+@router.get('/test')
+def i_am_testing_something():
+    """never query this, better remove it"""
+    from scripts.check_db_custom_method import main
+    main()

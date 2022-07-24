@@ -1,11 +1,11 @@
 """utility internal exceptions"""
 
 
-class PostAlreadyLikedException(BaseException):
+class TreeAlreadyLikedException(BaseException):
     """exception that occurs trying to like post that you have already liked"""
 
 
-class PostIsNotLikedException(BaseException):
+class TreeIsNotLikedException(BaseException):
     """exception that occurs trying to unlike post that you have not liked"""
 
 
@@ -15,3 +15,7 @@ class UsernameBusyException(BaseException):
 
 class ObjectDoesNotExistException(BaseException):
     """exception occurs trying to perform action on an object that does not exist"""
+
+
+class UserDoesNotHaveAccessException(BaseException):
+    """exception occurs when user does not have permission to do action"""

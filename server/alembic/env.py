@@ -2,6 +2,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, create_engine
 from sqlalchemy import pool
+from sqlalchemy_utils import database_exists, create_database
 
 from alembic import context
 
@@ -11,8 +12,10 @@ import sys
 from dotenv import load_dotenv
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-load_dotenv(os.path.join(BASE_DIR, "pkg/local.env"))
+load_dotenv(os.path.join(BASE_DIR, "pkg/alembic.env"))
 sys.path.append(BASE_DIR)
+
+print(f'base dir: {BASE_DIR}')
 
 from pkg.adapters.contract import PostgresEnv
 from pkg.models.models import Base
@@ -36,15 +39,71 @@ fileConfig(config.config_file_name)
 target_metadata = Base.metadata
 
 postgres_uri = PostgresEnv.get_url()
-postgres_uri = '/'.join(postgres_uri.split('/')[:-1])
+# postgres_uri = '/'.join(postgres_uri.split('/')[:-1])
 print(f'clean_uri: {postgres_uri}')
 engine = create_engine(postgres_uri)
-conn = engine.connect()
+# conn = engine.connect()
 try:
-    conn.execute(f"CREATE DATABASE IF NOT EXISTS {PostgresEnv.get_database()}")
-except:
-    pass
-conn.close()
+    # conn.execute(f"CREATE DATABASE {PostgresEnv.get_url()}")
+    if not database_exists(engine.url):
+        create_database(engine.url)
+    print(f"db exists: {database_exists(engine.url)}")
+except Exception as e:
+    print('wtf creatin db exception')
+    print(e, end='\n________-\n')
+
+try:
+    print('is there success')
+    postgres_uri = PostgresEnv.get_url()
+    engine = create_engine(postgres_uri)
+    conn = engine.connect()
+    print('maybe')
+    conn.execute("""
+DROP FUNCTION IF EXISTS getTreesGeo;
+CREATE FUNCTION getTreesGeo(Lat float, Lng float, Range float)
+RETURNS TABLE (
+    id int
+)
+language plpgsql
+AS
+$$
+-- Returns the trees in range.
+BEGIN
+    RETURN query (
+        SELECT 
+            tree.id
+        FROM tree
+        GROUP BY tree.id
+        HAVING (
+           111.111 *
+           DEGREES(
+               acos(cos(radians(Lat)) * 
+               cos(radians(tree.location_lat)) * 
+               cos(radians(Lng - tree.location_lon)) + 
+               sin(radians(Lat)) * 
+               sin(radians(tree.location_lat )))
+           )
+        ) < Range 
+        ORDER BY (
+           111.111 *
+           DEGREES(
+               acos(cos(radians(Lat)) * 
+               cos(radians(tree.location_lat)) * 
+               cos(radians(Lng - tree.location_lon)) + 
+               sin(radians(Lat)) * 
+               sin(radians(tree.location_lat )))
+           )
+        )
+    );
+END;
+$$;
+    """)
+    print('fucking success')
+except BaseException as e:
+    print('omg')
+    print(e)
+finally:
+    conn.close()
 
 
 # other values from the config, defined by the needs of env.py,

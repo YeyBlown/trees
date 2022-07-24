@@ -3,8 +3,10 @@ from fastapi import APIRouter, Depends
 
 from adapters.db import DBFacade
 from services.token import TokenService
-from models.schema import User as SchemaUser
+from models.schema import User as SchemaUser, Roles
 from models.models import User as ModelUser
+
+from models.schema import PaginatedSearch
 
 router = APIRouter(
     prefix="/user",
@@ -16,21 +18,16 @@ router = APIRouter(
 @router.post("/create", response_model=SchemaUser)
 def create(user: SchemaUser):
     """creates new user by schema"""
+    if user.role != Roles.BASIC_ROLE.value:
+        raise Exception('u cannot create non-basic users, sorry')
     db_user = DBFacade().create_user(user)
     return db_user
 
 
-@router.get("/view")
-def view(page: int = 0, page_size: int = 10, sort_by: str = 'id', asc_order: bool = True):
-    """returns paginated user models"""
-    users = DBFacade().get_paginated_users(page, page_size, sort_by, asc_order)
-    return users
-
-
 @router.get("/search")
-def view(query: str, search_by: str = 'username', page: int = 0, page_size: int = 10, sort_by: str = 'id', asc_order: bool = True):
+def view(paginated_search: PaginatedSearch):
     """returns paginated user models"""
-    users = DBFacade().search_users(query, search_by, page, page_size, sort_by, asc_order)
+    users = DBFacade().search_users(paginated_search)
     return users
 
 

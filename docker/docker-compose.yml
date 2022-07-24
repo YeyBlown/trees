@@ -2,39 +2,59 @@ version: "3.9"
 
 # TODO: move out env args
 services:
-  postgresql:
+  trees-postgresql:
     image: "postgres"
-    container_name: "pollos-demo-postgresql"
+    container_name: "trees-postgresql"
     ports:
       - "5432:5432"
     environment:
       - POSTGRES_USER=myusername
       - POSTGRES_PASSWORD=mypassword
-    volumes:
-      - /data\:/var/lib/postgresql/data
     networks:
       - backend
-  games-server:
-    image: "demo-server"
-    container_name: "pollos-demo-server"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  trees-server:
+    image: "pollos-trees-server"
+    container_name: "trees-server"
+    depends_on:
+      trees-postgresql:
+        condition: service_healthy
+    links:
+      - trees-postgresql
     ports:
       - "8000:8000"
     networks:
       - backend
-  games-client:
-    image: "demo-client"
-    container_name: "pollos-demo-client"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl", "-f", "http://localhost:8000" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  trees-client:
+    image: "pollos-trees-client"
+    container_name: "trees-client"
     ports:
       - "3000:443"
     networks:
       - frontend
+    stdin_open: true
+    environment:
+      - CI=true
+      - HOST=0.0.0.0
+      - PORT=3000
+      - DISABLE_ESLINT_PLUGIN=true
 
   nginx:
     image: nginx:latest
     volumes:
       - ../nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - games-client
+      - trees-client
+      - trees-server
     ports:
       - "80:4000"
       - "443:4001"
