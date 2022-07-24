@@ -10,8 +10,6 @@ services:
     environment:
       - POSTGRES_USER=myusername
       - POSTGRES_PASSWORD=mypassword
-    volumes:
-      - /data\:/var/lib/postgresql/data
     networks:
       - backend
   trees-server:

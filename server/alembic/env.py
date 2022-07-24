@@ -44,8 +44,9 @@ engine = create_engine(postgres_uri)
 conn = engine.connect()
 try:
     conn.execute(f"CREATE DATABASE IF NOT EXISTS {PostgresEnv.get_database()}")
-except:
-    pass
+except Exception as e:
+    print('wtf creatin db exception')
+    print(e, end='\n________-\n')
 finally:
     conn.close()
 try:
