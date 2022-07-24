@@ -11,7 +11,7 @@ from entities.exceptions import (
 from models.schema import TreeCreate as SchemaTree
 from models.models import User as ModelUser
 
-from pkg.models.schema import PaginatedSearch, TreeSearch
+from models.schema import PaginatedSearch, TreeSearch
 
 router = APIRouter(
     prefix="/tree",
