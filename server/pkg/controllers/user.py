@@ -6,7 +6,7 @@ from services.token import TokenService
 from models.schema import User as SchemaUser
 from models.models import User as ModelUser
 
-from server.pkg.models.schema import PaginatedSearch
+from pkg.models.schema import PaginatedSearch
 
 router = APIRouter(
     prefix="/user",
