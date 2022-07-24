@@ -1,9 +1,11 @@
-# demo branch is demo1
+# demo branch is demo
 
 # hackaton qualification project
 
 ## how to run ?
 
+0. change client/wrapper/src/base_url.js to:
+base_url = 'http://localhost:8000'
 1. install docker on your system and ensure it is working as a daemon
 2. run `make dockr` from project directory
 3. run `make run` from project directory
