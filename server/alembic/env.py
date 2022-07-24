@@ -11,7 +11,7 @@ import sys
 from dotenv import load_dotenv
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-load_dotenv(os.path.join(BASE_DIR, "pkg/local.env"))
+load_dotenv(os.path.join(BASE_DIR, "pkg/alembic.env"))
 sys.path.append(BASE_DIR)
 
 print(f'base dir: {BASE_DIR}')
