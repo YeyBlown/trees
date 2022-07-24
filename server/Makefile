@@ -1,7 +1,7 @@
 dockr:
-	docker rm -f demo-server || true
+	docker rm -f pollos-trees-server || true
 	docker build . -f docker/.Dockerfile --tag pollos-trees-server
-	docker create --name trees-server pollos-trees-server
+	docker create --name pollos-trees-server pollos-trees-server
 
 fmt:
 	black ./pkg --check
