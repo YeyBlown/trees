@@ -43,7 +43,8 @@ print(f'clean_uri: {postgres_uri}')
 engine = create_engine(postgres_uri)
 conn = engine.connect()
 try:
-    conn.execute(f"CREATE DATABASE IF NOT EXISTS {PostgresEnv.get_database()}")
+    conn.execute(f"SELECT 'CREATE DATABASE {PostgresEnv.get_database()}'"
+                 f"WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '{PostgresEnv.get_database()}')\gexec")
 except Exception as e:
     print('wtf creatin db exception')
     print(e, end='\n________-\n')
