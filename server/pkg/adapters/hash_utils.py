@@ -20,3 +20,9 @@ class HashUtils:
     def get_password_hash(password):
         """calculates password hash"""
         return HashUtils.pwd_context.hash(password)
+
+
+if __name__ == '__main__':
+    password = 'root'
+    pass_hash = HashUtils.get_password_hash(password)
+    print(pass_hash)

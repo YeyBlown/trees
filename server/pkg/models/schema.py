@@ -26,6 +26,10 @@ class User(BaseModel):
         orm_mode = True
 
 
+class UserWithId(User):
+    id: int
+
+
 class Like(BaseModel):
     user_id: int
     post_id: int

@@ -61,9 +61,11 @@ class DBFacade:
         return decorator
 
     @lock_decorator(_lock)
-    def get_user_by_username(self, username: str):
+    def get_user_by_username(self, username: str, custom_db=None)->ModelUser:
         """returns user model by username"""
-        user = db.session.query(ModelUser).filter_by(username=username).first()
+        if custom_db is None:
+            custom_db = db
+        user = custom_db.session.query(ModelUser).filter_by(username=username).first()
         return user
 
     @lock_decorator(_lock)
@@ -79,22 +81,17 @@ class DBFacade:
         return users
 
     @lock_decorator(_lock)
-    def get_paginated_users(self, page, page_size, sort_by, asc_order):
-        """returns all user models"""
-        users = _UserDBAdapter.query_paginated_users(page, page_size, sort_by, asc_order)
-        return users
-
-    @lock_decorator(_lock)
     def search_users(self, paginated_search: PaginatedSearch):
         """returns paginated user models"""
         users = _UserDBAdapter.search_paginated_users(paginated_search)
-        return users
+        return users.all()
 
     @lock_decorator(_lock)
     def search_trees(self, paginated_search: PaginatedSearch, tree_search: SchemaTreeSearch):
         """returns paginated tree models"""
-        users = _TreeDBAdapter.search_paginated_trees(paginated_search, tree_search)
-        return users
+        trees_within_range_cursor = _TreeDBAdapter.get_nearest_trees_cursor(tree_search)
+        trees = _TreeDBAdapter.get_paginated_trees_from_cursor(trees_within_range_cursor, paginated_search)
+        return trees.all()
 
     @lock_decorator(_lock)
     def create_user(self, user: SchemaUser):
@@ -120,6 +117,18 @@ class DBFacade:
         _UserDBAdapter.add_tree_created(user, tree_db)
         _UserDBAdapter.update_last_activity(user)
         return tree_db
+
+    @lock_decorator(_lock)
+    def delete_tree_by_id(self, tree_id, user_model: ModelUser):
+        """deletes given user"""
+        tree = db.session.query(ModelTree).filter_by(id=tree_id).first()
+        if not tree:
+            raise Exception(f'tree with id {tree_id} does not exist')
+        _UserDBAdapter.delete_tree(user_model, tree)
+        _UserDBAdapter.update_last_activity(user_model)
+
+        db.session.delete(tree)
+        db.session.commit()
 
     @lock_decorator(_lock)
     def get_all_trees(self):
@@ -158,13 +167,13 @@ class DBFacade:
 
     @lock_decorator(_lock)
     def unlike(self, user: ModelUser, tree_id: int):
-        """removes like made by user from tree by tree_id"""
+        """deletes like made by user from tree by tree_id"""
         tree = _TreeDBAdapter.get_tree_by_id(tree_id)
         like = _LikeDBAdapter.get_like(user.id, tree.id)
         if not like:
             raise TreeIsNotLikedException()
-        _UserDBAdapter.remove_like(user, like)
-        _TreeDBAdapter.remove_like(tree, like)
+        _UserDBAdapter.delete_like(user, like)
+        _TreeDBAdapter.delete_like(tree, like)
         db.session.query(ModelLike).filter(and_(ModelLike.id == like.id)).delete()
         _UserDBAdapter.update_last_activity(user)
 
@@ -183,10 +192,12 @@ class _UserDBAdapter:
         db.session.commit()
 
     @staticmethod
-    def create_user(user: SchemaUser):
+    def create_user(user: SchemaUser, custom_db=None):
         """creates and stores new user model by tree schema"""
+        if custom_db is None:
+            custom_db = db
         identical_user = (
-            db.session.query(ModelUser).filter_by(username=user.username).first()
+            custom_db.session.query(ModelUser).filter_by(username=user.username).first()
         )
         if identical_user:
             raise UsernameBusyException()
@@ -200,8 +211,8 @@ class _UserDBAdapter:
             trees_created=[],
             likes=[],
         )
-        db.session.add(user_db)
-        db.session.commit()
+        custom_db.session.add(user_db)
+        custom_db.session.commit()
         return user_db
 
     @staticmethod
@@ -228,24 +239,25 @@ class _UserDBAdapter:
         db.session.commit()
 
     @staticmethod
-    def remove_like(user: ModelUser, like: ModelLike):
-        """removes like from given user model"""
+    def delete_like(user: ModelUser, like: ModelLike):
+        """deletes like from given user model"""
         user.likes.remove(like)
         db.session.add(user)
         db.session.commit()
 
     @staticmethod
-    def query_paginated_users(page, page_size, sort_by, asc_order):
-        users = db.session.query(ModelUser).order_by(asc(sort_by) if asc_order else desc(sort_by)).\
-            limit(page_size).offset(page * page_size).all()
-        return users
+    def delete_tree(user: ModelUser, tree: ModelTree):
+        """deletes like from given user model"""
+        user.trees_created.remove(tree)
+        db.session.add(user)
+        db.session.commit()
 
     @staticmethod
     def search_paginated_users(paginated_search: PaginatedSearch):
-        users = db.session.query(ModelUser).filter(ModelUser.username.regexp_match(paginated_search.query)).\
+        users_cursor = db.session.query(ModelUser).filter(ModelUser.username.regexp_match(paginated_search.query)).\
             order_by(asc(paginated_search.sort_by) if paginated_search.asc_order else desc(paginated_search.sort_by)).\
-            limit(paginated_search.page_size).offset(paginated_search.page * paginated_search.page_size).all()
-        return users
+            limit(paginated_search.page_size).offset(paginated_search.page * paginated_search.page_size)
+        return users_cursor
 
 
 class _TreeDBAdapter:
@@ -273,15 +285,23 @@ class _TreeDBAdapter:
         return tree_db
 
     @staticmethod
-    def search_paginated_trees(paginated_search: PaginatedSearch, tree_search: SchemaTreeSearch):
-        """returns all trees by coordinates. Paginated and sorted"""
-        # TODO: find by coordinates
+    def get_paginated_trees_from_cursor(trees_cursor, paginated_search: PaginatedSearch):
         # TODO: utilize tree search(tree details, flags, etc.)
         # TODO: do i need this fucking regex?
-        trees = db.session.query(ModelTree).filter(ModelTree.username.regexp_match(paginated_search.query)).\
-            order_by(asc(paginated_search.sort_by) if paginated_search.asc_order else desc(paginated_search.sort_by)).\
-            limit(paginated_search.page_size).offset(paginated_search.page * paginated_search.page_size).all()
-        return trees
+        if paginated_search.page_size is not None:
+            res = trees_cursor.filter(ModelTree.username.regexp_match(paginated_search.query)).\
+                order_by(asc(paginated_search.sort_by) if paginated_search.asc_order else desc(paginated_search.sort_by)).\
+                limit(paginated_search.page_size).offset(paginated_search.page * paginated_search.page_size)
+        else:
+            res = trees_cursor
+        return res
+
+
+    @staticmethod
+    def search_paginated_trees(paginated_search: PaginatedSearch):
+        """returns all trees by coordinates. Paginated and sorted"""
+        cursor = db.session.query(ModelTree)
+        return _TreeDBAdapter.get_paginated_trees_from_cursor(cursor, paginated_search)
 
     @staticmethod
     def get_tree_by_id(tree_id: int):
@@ -311,14 +331,15 @@ class _TreeDBAdapter:
         db.session.commit()
 
     @staticmethod
-    def remove_like(tree: ModelTree, like: ModelLike):
-        """remove given like from tree"""
+    def delete_like(tree: ModelTree, like: ModelLike):
+        """delete given like from tree"""
         tree.likes.remove(like)
         db.session.add(tree)
         db.session.commit()
 
     @staticmethod
     def get_nearest_trees_cursor(tree_search: SchemaTreeSearch):
+        """returns nearest trees by coordinates and range"""
         lat, lng, range = tree_search.location_lat, tree_search.location_lon, tree_search.search_radius
         trees = _TreeDBAdapter.engine.execute(
             f'SELECT * FROM getTreesGeo({str(lat)[:12]}, {str(lng)[:12]}, {range})'
@@ -326,7 +347,7 @@ class _TreeDBAdapter:
         return trees
 
     @staticmethod
-    def remove_all_trees():
+    def delete_all_trees():
         res = _TreeDBAdapter.engine.execute(
             f'DELETE FROM tree;'
         )

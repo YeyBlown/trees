@@ -18,7 +18,6 @@ router = APIRouter(
 def delete_user(
         user_id: int,
         current_user: ModelUser = Depends(TokenService.get_current_user),
-
 ):
     """deletes user by id"""
     if TokenService.check_access_by_roles(current_user, [Roles.SUPER_ADMIN_ROLE]):

@@ -77,7 +77,7 @@ def main():
     result_str = results_to_str(results)
     with open('result', 'w') as f:
         f.write(result_str)
-    _TreeDBAdapter.remove_all_trees()
+    _TreeDBAdapter.delete_all_trees()
 
 
 

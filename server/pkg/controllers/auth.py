@@ -7,7 +7,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from services.token import TokenService
 from adapters.db import DBFacade
-from models.schema import User, Token
+from models.schema import UserWithId, Token
+from models.models import User as ModelUser
 
 router = APIRouter(
     prefix="/auth",
@@ -36,9 +37,9 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get("/me/", response_model=User)
+@router.get("/me/", response_model=UserWithId)
 async def read_users_me(
-    current_user: User = Depends(TokenService.get_current_user),
+    current_user: ModelUser = Depends(TokenService.get_current_user),
 ):
     """returns current user model by credentials"""
     return current_user

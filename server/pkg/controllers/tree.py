@@ -8,7 +8,7 @@ from entities.exceptions import (
     TreeIsNotLikedException,
     ObjectDoesNotExistException,
 )
-from models.schema import TreeCreate as SchemaTree
+from models.schema import TreeCreate as SchemaTree, TreeUpdate, Roles
 from models.models import User as ModelUser
 
 from models.schema import PaginatedSearch, TreeSearch
@@ -25,8 +25,19 @@ async def create(
     tree: SchemaTree, current_user: ModelUser = Depends(TokenService.get_current_user)
 ):
     """creates new post by schema"""
-    db_post = DBFacade().create_post(current_user, tree, current_user.id)
-    return db_post
+    db_tree = DBFacade().create_tree(current_user, tree, current_user.id)
+    return db_tree
+
+
+@router.delete("/delete")
+async def create(
+    tree_id: int, current_user: ModelUser = Depends(TokenService.get_current_user)
+):
+    """creates new post by schema"""
+    if current_user.role not in [Roles.ADMIN_ROLE.value, Roles.SUPER_ADMIN_ROLE.value]:
+        raise Exception('user not permitted')
+    db_tree = DBFacade().delete_tree_by_id(tree_id, current_user)
+    return db_tree
 
 
 @router.post("/like")
@@ -59,13 +70,13 @@ async def unlike(
 @router.get("/get_all")
 def view():
     """returns all posts to see"""
-    posts = DBFacade().get_all_trees()
-    return posts
+    trees = DBFacade().get_all_trees()
+    return trees
 
 
 # TODO
 @router.get("/search")
 def search(paginated_search: PaginatedSearch, tree_search: TreeSearch):
     """returns paginated user models"""
-    users = DBFacade().search_trees(paginated_search, tree_search)
-    return users
+    trees = DBFacade().search_trees(paginated_search, tree_search)
+    return trees
