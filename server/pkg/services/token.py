@@ -5,10 +5,12 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 
+from entities.exceptions import UserDoesNotHaveAccessException
 from adapters.contract import EncryptionEnv
 from adapters.db import DBFacade
 from adapters.hash_utils import HashUtils
 
+from models.models import User as ModelUser
 
 class TokenService:
     """service that encapsulates operations with tokens"""
@@ -64,3 +66,11 @@ class TokenService:
         if user.role not in roles_with_access:
             raise UserIsNotPermittedException
         return user
+
+    @staticmethod
+    def check_access_by_roles(current_user: ModelUser, roles: list):
+        """returns True is user have access"""
+        if current_user.role in roles:
+            return True
+        else:
+            raise UserDoesNotHaveAccessException()

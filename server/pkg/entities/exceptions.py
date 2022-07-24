@@ -15,3 +15,7 @@ class UsernameBusyException(BaseException):
 
 class ObjectDoesNotExistException(BaseException):
     """exception occurs trying to perform action on an object that does not exist"""
+
+
+class UserDoesNotHaveAccessException(BaseException):
+    """exception occurs when user does not have permission to do action"""
