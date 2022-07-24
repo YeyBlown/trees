@@ -71,6 +71,6 @@ class TokenService:
     def check_access_by_roles(current_user: ModelUser, roles: list):
         """returns True is user have access"""
         if current_user.role in roles:
-            return
+            return True
         else:
             raise UserDoesNotHaveAccessException()
