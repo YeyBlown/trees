@@ -7,4 +7,4 @@ COPY . .
 
 WORKDIR /pkg
 EXPOSE 8000
-CMD ["cd / ; sh -c alembic upgrade head ; /cd pkg; python3 entrypoint.py"]
+CMD ["cd / ;", "sh -c alembic upgrade head ;","/cd pkg;","python3 entrypoint.py"]
