@@ -1,4 +1,4 @@
-import { React, useEffect } from "react";
+import * as React from "react";
 import { Map, TileLayer, Marker, Popup } from "react-leaflet";
 import Header from "./Header";
 import "./index.css";
@@ -8,65 +8,83 @@ const defaultLat = 49.2331;
 const defaultLng = 28.4682;
 const defaultRadius = 100;
 
-useEffect(() => {
-  getMarkers(defaultLat, defaultLng, defaultRadius);
-}, []);
+
 
 class App extends React.Component {
-  constructor() {
-    super();
+  componentDidMount() {
+    let newTrees = getMarkers(defaultLat, defaultLng, defaultRadius);
+    if (!newTrees){
+      newTrees = []
+    }
+    console.log(newTrees)
+    for (let i=0; i<newTrees.length; i++) {
+      this.addTree(newTrees[i]);
+    }
+  }
+
+  constructor(props) {    
+    super(props);
     this.state = {
       //default is set to center of the Vinnytsia
       markers: [[49.2331, 28.4682]],
-      currenMarker: null,
+      currentMarker: null,
       treename: "",
-      age: "",
+      age: 0,
       crownRadius: "",
       photo: "",
     };
   }
 
+  setCurrentMarkerField = (k, v) => {
+    const currentMarker = this.state.currentMarker
+    currentMarker.k = v
+    this.setState({
+      currentMarker: currentMarker
+    })
+  }
+
   getCurrentMarker = () => {
-    if (this.state.currentMarker) {
+    console.log("adding current marker to map")
+    if (this.state.currentMarker != null) {
       return (
-        <Marker position={this.state.currentMarker}>
+        <Marker position={[this.state.currentMarker.lat, this.state.currentMarker.lng]}>
           <Popup>
             <form>
               <input
                 type="text"
                 placeholder="Enter a treename"
                 onChange={(e) => {
-                  this.setState({ treename: e.target.value });
+                  this.setCurrentMarkerField("treename", e.target.value);
                 }}
               >
-              {this.state.newMarker.treename}
+              {this.state.currentMarker.treename}
               </input>
               <input
                 type="text"
                 placeholder="Age"
                 onChange={(e) => {
-                  this.setState({ age: e.target.value });
+                  this.setCurrentMarkerField("age", e.target.value);
                 }}
               >
-              {this.state.newMarker.age}
+              {this.state.currentMarker.age}
               </input>
               <input
                 type="text"
                 placeholder="Tree Crown Radius"
                 onChange={(e) => {
-                  this.setState({ crownRadius: e.target.value });
+                  this.setCurrentMarkerField("crownRadius", e.target.value );
                 }}
               >
-              {this.state.newMarker.crownRadius}
+              {this.state.currentMarker.crownRadius}
               </input>
               <input
                 type="file"
                 placeholder="Photo"
                 onChange={(e) => {
-                  this.setState({ photo: e.target.value });
+                  this.setCurrentMarkerField("photo", e.target.value);
                 }}
               >
-              {this.state.newMarker.photo}
+              {this.state.currentMarker.photo}
               </input>
               <button type="submit" onClick={this.handleSubmit}>
                 Submit
@@ -85,16 +103,17 @@ class App extends React.Component {
   //fetch funtion to get data and set it to state
 
   addMarker = (e) => {
+    console.log("adding marker")
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
-    if(this.state.newMarker) {
-      const currentMarker = this.state.newMarker
+    if(this.state.currentMarker) {
+      const currentMarker = this.state.currentMarker
       currentMarker.lat = lat
       currentMarker.lng = lng
-      this.setState({ newMarker: currentMarker })
+      this.setState({ currentMarker: currentMarker })
     } else {
       this.setState({
-        newMarker: {
+        currentMarker: {
           lat: lat,
           lng: lng,
           treename: "",
@@ -103,27 +122,32 @@ class App extends React.Component {
           photo: "",
         }
       })
+      console.log(this.state.currentMarker.toString())
     }
     
   };
 
+  addTree = (newTree) => {
+    const myNewMarker = {
+      id: newTree.id,
+      lat: newTree.location_lat,
+      lng: newTree.location_lon,
+      treename: newTree.plant_type,
+      age: newTree.creation_year,
+      crownRadius: newTree.core_radius,
+      photo: null
+    }
+    this.setState({
+      markers: [...this.state.markers, myNewMarker],
+      currentMarker: null
+    })
+  }
+
   handleSubmit = (e) => {
-    if(this.state.newMarker) {
-      const m = this.state.newMarker
+    if(this.state.currentMarker) {
+      const m = this.state.currentMarker
       const newTree = createTree(m.lat, m.lng, m.treename, m.age, m.crownRadius)
-      const myNewMarker = {
-        id: newTree.id,
-        lat: newTree.location_lat,
-        lng: newTree.location_lon,
-        treename: newTree.plant_type,
-        age: newTree.creation_year,
-        crownRadius: newTree.core_radius,
-        photo: null
-      }
-      this.setState({
-        markers: [...this.state.markers, myNewMarker],
-        newMarker: null
-      })
+      this.addTree(newTree)
     } else {
       alert("Please click on the map to add a marker")
     }

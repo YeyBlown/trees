@@ -8814,7 +8814,7 @@
   dependencies:
     "history" "^5.2.0"
 
-"react-scripts@3.3.0":
+"react-scripts@^3.3.0":
   "integrity" "sha512-hzPc6bxCc9GnsspWqk494c2Gpd0dRbk/C8q76BNQIENi9GMwoxFljOEcZoZcpFpJgQ45alxFR6QaLt+51qie7g=="
   "resolved" "https://registry.npmjs.org/react-scripts/-/react-scripts-3.3.0.tgz"
   "version" "3.3.0"

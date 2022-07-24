@@ -1,4 +1,4 @@
-import baseUrl from "./baseUrl";
+import baseUrl from "./base_url";
 
 const getDefaultPagenation = () => {
   return {
@@ -35,7 +35,7 @@ export function cheatToken(){
 }
 
 export function handleDelete() {
-  const token = getToken();
+  const token = cheatToken().token
   console.log(token);
   fetch(`${baseUrl}/user/user`, {
     method: "DELETE",
@@ -53,7 +53,7 @@ export function handleDelete() {
     });
 }
 
-export function createUser() {
+export function createUser(email, password, name, surname, description) {
   fetch(`${baseUrl}/user/create`, {
     method: "POST",
     headers: {
@@ -67,7 +67,6 @@ export function createUser() {
       name: `${name}`,
       surname: `${surname}`,
       description: `${description}`,
-      age: parseInt(age),
     }),
   })
     .then((response) => response.json())
@@ -123,7 +122,7 @@ export function createTree(lat, lng, treename, age, crownRadius) {
     }
 
 export function handleMe() {
-  const token = getToken();
+  const token = cheatToken().token
   console.log(token);
   fetch(`${baseUrl}/auth/me`, {
     method: "GET",
@@ -162,6 +161,7 @@ export function getMarkers(lat, lng, radius) {
     .then((response) => response.json())
     .then((data) => {
       console.log("Success:", data);
+      return data;
     })
     .catch((error) => {
       console.error("Error:", error);
