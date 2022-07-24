@@ -17,7 +17,7 @@ router = APIRouter(
 )
 
 
-@router.post("/token", response_model=Token)
+@router.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     """checks user credential. if all okay updates last_login time and return token"""
     db_adapter = DBFacade()
@@ -34,7 +34,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     db_adapter.update_last_login(user)
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer", "user": user}
 
 
 @router.get("/me/", response_model=UserWithId)
