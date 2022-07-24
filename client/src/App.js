@@ -1,13 +1,24 @@
-import React from "react";
+import { React, useEffect } from "react";
 import { Map, TileLayer, Marker, Popup } from "react-leaflet";
 import Header from "./Header";
-import './index.css';
+import "./index.css";
+import { getMarkers, createTree, deleteTree } from "./superFetchers";
+
+const defaultLat = 49.2331;
+const defaultLng = 28.4682;
+const defaultRadius = 100;
+
+useEffect(() => {
+  getMarkers(defaultLat, defaultLng, defaultRadius);
+}, []);
 
 class App extends React.Component {
   constructor() {
     super();
     this.state = {
-      markers: [[49.2331, 28.4682]], //default is set to center of the Vinnytsia
+      //default is set to center of the Vinnytsia
+      markers: [[49.2331, 28.4682]],
+      currenMarker: null,
       treename: "",
       age: "",
       crownRadius: "",
@@ -15,29 +26,139 @@ class App extends React.Component {
     };
   }
 
+  getCurrentMarker = () => {
+    if (this.state.currentMarker) {
+      return (
+        <Marker position={this.state.currentMarker}>
+          <Popup>
+            <form>
+              <input
+                type="text"
+                placeholder="Enter a treename"
+                onChange={(e) => {
+                  this.setState({ treename: e.target.value });
+                }}
+              >
+              {this.state.newMarker.treename}
+              </input>
+              <input
+                type="text"
+                placeholder="Age"
+                onChange={(e) => {
+                  this.setState({ age: e.target.value });
+                }}
+              >
+              {this.state.newMarker.age}
+              </input>
+              <input
+                type="text"
+                placeholder="Tree Crown Radius"
+                onChange={(e) => {
+                  this.setState({ crownRadius: e.target.value });
+                }}
+              >
+              {this.state.newMarker.crownRadius}
+              </input>
+              <input
+                type="file"
+                placeholder="Photo"
+                onChange={(e) => {
+                  this.setState({ photo: e.target.value });
+                }}
+              >
+              {this.state.newMarker.photo}
+              </input>
+              <button type="submit" onClick={this.handleSubmit}>
+                Submit
+              </button>
+              <button type="submit" onClick={this.handleDelete}>
+                Delete
+              </button>
+            </form>
+          </Popup>
+        </Marker>
+      );
+    }
+    return null;
+  }
+
   //fetch funtion to get data and set it to state
 
   addMarker = (e) => {
-    const { markers } = this.state;
-    markers.push(e.latlng);
-    this.setState({ markers });
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+    if(this.state.newMarker) {
+      const currentMarker = this.state.newMarker
+      currentMarker.lat = lat
+      currentMarker.lng = lng
+      this.setState({ newMarker: currentMarker })
+    } else {
+      this.setState({
+        newMarker: {
+          lat: lat,
+          lng: lng,
+          treename: "",
+          age: 0,
+          crownRadius: "",
+          photo: "",
+        }
+      })
+    }
+    
   };
 
-  handleSubmit = () => {};
+  handleSubmit = (e) => {
+    if(this.state.newMarker) {
+      const m = this.state.newMarker
+      const newTree = createTree(m.lat, m.lng, m.treename, m.age, m.crownRadius)
+      const myNewMarker = {
+        id: newTree.id,
+        lat: newTree.location_lat,
+        lng: newTree.location_lon,
+        treename: newTree.plant_type,
+        age: newTree.creation_year,
+        crownRadius: newTree.core_radius,
+        photo: null
+      }
+      this.setState({
+        markers: [...this.state.markers, myNewMarker],
+        newMarker: null
+      })
+    } else {
+      alert("Please click on the map to add a marker")
+    }
+  }
 
-  handleDelete = () => {};
+  refreshMarkers = (e) => {
+    const lat = this.refs.map.leafletElement.getCenter().lat;
+    const lng = this.refs.map.leafletElement.getCenter().lng;
+    const newMarkers = getMarkers(lat, lng, defaultRadius);
+    this.setState({ markers: newMarkers });
+  };
 
   render() {
     return (
-        <Map center={[49.2331, 28.4682]} onClick={this.addMarker} zoom={13}>
+      <div>
+        <button type="submit" onClick={this.refreshMarkers}>
+          Refresh
+        </button>
+        <Map
+          ref="map"
+          center={[49.2331, 28.4682]}
+          onClick={this.addMarker}
+          zoom={13}
+        >
           <TileLayer
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"
           />
+          {this.getCurrentMarker()}
           {this.state.markers.map((position, idx) => (
             <Marker key={`marker-${idx}`} position={position}>
               <Popup>
-                <form> {/*this.state.popup.map((it, index) => {})*/}
+                <form>
+                  {" "}
+                  {/*this.state.popup.map((it, index) => {})*/}
                   <input
                     type="text"
                     placeholder="Enter a treename"
@@ -77,6 +198,7 @@ class App extends React.Component {
             </Marker>
           ))}
         </Map>
+      </div>
     );
   }
 }
