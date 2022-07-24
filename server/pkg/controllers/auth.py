@@ -34,7 +34,14 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     db_adapter.update_last_login(user)
-    return {"access_token": access_token, "token_type": "bearer", "user": user}
+    user_return = UserWithId(
+        id=user.id,
+        username=user.username,
+        hashed_password=user.hashed_password,
+        nickname=user.nickname,
+        role=user.role,
+    )
+    return {"access_token": access_token, "token_type": "bearer", "user": user_return}
 
 
 @router.get("/me/", response_model=UserWithId)

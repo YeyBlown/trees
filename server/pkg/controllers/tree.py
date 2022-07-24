@@ -1,4 +1,5 @@
 """ posts related controllers here"""
+import logging
 from fastapi import APIRouter, Depends
 
 from adapters.db import DBFacade
@@ -75,8 +76,9 @@ def view():
 
 
 # TODO
-@router.get("/search")
+@router.post("/search", response_model=list[TreeUpdate])
 def search(paginated_search: PaginatedSearch, tree_search: TreeSearch):
     """returns paginated user models"""
     trees = DBFacade().search_trees(paginated_search, tree_search)
+    logging.info(trees)
     return trees

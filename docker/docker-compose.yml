@@ -41,6 +41,12 @@ services:
       - "3000:443"
     networks:
       - frontend
+    stdin_open: true
+    environment:
+      - CI=true
+      - HOST=0.0.0.0
+      - PORT=3000
+      - DISABLE_ESLINT_PLUGIN=true
 
   nginx:
     image: nginx:latest

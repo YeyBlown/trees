@@ -270,14 +270,12 @@ class _TreeDBAdapter:
         tree_db = ModelTree(
             location_lon=tree.location_lon,
             location_lat=tree.location_lat,
-            tree_picture=tree.tree_picture,
-            registration_number=tree.registration_number,
             core_radius=tree.core_radius,
             creation_year=tree.creation_year,
             plant_type=tree.plant_type,
-            should_be_cut=tree.should_be_cut,
-            should_be_processed=tree.should_be_processed,
-            should_be_removed=tree.should_be_removed,
+            should_be_cut=False,
+            should_be_processed=False,
+            should_be_removed=False,
             creator_id=creator_id
         )
         db.session.add(tree_db)
@@ -289,11 +287,11 @@ class _TreeDBAdapter:
         # TODO: utilize tree search(tree details, flags, etc.)
         # TODO: do i need this fucking regex?
         if not paginated_search.ignore_pagination:
-            res = trees_cursor.filter(ModelTree.username.regexp_match(paginated_search.query)).\
+            res = db.session.query(ModelTree).filter(ModelTree.id.in_(trees_cursor)).filter(ModelTree.username.regexp_match(paginated_search.query)).\
                 order_by(asc(paginated_search.sort_by) if paginated_search.asc_order else desc(paginated_search.sort_by)).\
                 limit(paginated_search.page_size).offset(paginated_search.page * paginated_search.page_size)
         else:
-            res = trees_cursor
+            res = db.session.query(ModelTree).filter(ModelTree.id.in_([e._data for e in trees_cursor.all()]))  # TODO: avoid cursor all
         return res
 
 

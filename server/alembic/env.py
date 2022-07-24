@@ -62,9 +62,7 @@ try:
 DROP FUNCTION IF EXISTS getTreesGeo;
 CREATE FUNCTION getTreesGeo(Lat float, Lng float, Range float)
 RETURNS TABLE (
-    id int,
-    location_lon float,
-    location_lat float
+    id int
 )
 language plpgsql
 AS
@@ -73,9 +71,7 @@ $$
 BEGIN
     RETURN query (
         SELECT 
-            tree.id,
-            tree.location_lat,
-            tree.location_lon
+            tree.id
         FROM tree
         GROUP BY tree.id
         HAVING (

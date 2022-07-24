@@ -26,6 +26,13 @@ class User(BaseModel):
         orm_mode = True
 
 
+class UserWithId(BaseModel):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
 class UserWithId(User):
     id: int
 
@@ -43,18 +50,10 @@ class TreeCreate(BaseModel):
     location_lon: float
     location_lat: float
 
-    tree_picture: None  # TODO!
-
     # static data on tree
-    registration_number: Optional[str] = None
     core_radius: int  # millimeters
     creation_year: int
     plant_type: str
-
-    # tree events
-    should_be_cut: bool = False
-    should_be_processed: bool = False
-    should_be_removed: bool = False
 
     # technical for backend
     creator_id: int
@@ -63,12 +62,22 @@ class TreeCreate(BaseModel):
         orm_mode = True
 
 
-class TreeUpdate(TreeCreate):
+class TreeClient(TreeCreate):
+
+    registration_number: Optional[str] = None
+
+    # tree events
+    should_be_cut: bool = False
+    should_be_processed: bool = False
+    should_be_removed: bool = False
+
+
+class TreeUpdate(TreeClient):
     id: int
 
 
-class TreeFull(TreeCreate):
-    id: int
+class TreeFull(TreeUpdate):
+    tree_picture: None  # TODO!
 
     creator: User
 

@@ -11,43 +11,55 @@ const defaultRadius = 100;
 
 
 class App extends React.Component {
+
+  refresh = () => {
+    window.location.reload(false);
+  }
+
   componentDidMount() {
-    let newTrees = getMarkers(defaultLat, defaultLng, defaultRadius);
-    if (!newTrees){
-      newTrees = []
-    }
-    console.log(newTrees)
+    const inSetMarkers = (newTrees) => {
+      console.log('got some new trees')
+      console.log(newTrees)
+      if (!newTrees){
+        newTrees = []
+      }
     for (let i=0; i<newTrees.length; i++) {
       this.addTree(newTrees[i]);
     }
+    }
+    getMarkers(defaultLat, defaultLng, defaultRadius, inSetMarkers);
+
   }
 
   constructor(props) {    
     super(props);
     this.state = {
       //default is set to center of the Vinnytsia
-      markers: [[49.2331, 28.4682]],
+      markers: [],
       currentMarker: null,
       treename: "",
       age: 0,
-      crownRadius: "",
+      crownRadius: 0,
       photo: "",
     };
   }
 
   setCurrentMarkerField = (k, v) => {
+    console.log("setting current marker")
+    console.log(k)
+    console.log(v)
     const currentMarker = this.state.currentMarker
-    currentMarker.k = v
+    currentMarker[k] = v
     this.setState({
       currentMarker: currentMarker
     })
   }
 
-  getCurrentMarker = () => {
+  getCurrentMarker = (currentMarker) => {
     console.log("adding current marker to map")
-    if (this.state.currentMarker != null) {
+    if (currentMarker != null) {
       return (
-        <Marker position={[this.state.currentMarker.lat, this.state.currentMarker.lng]}>
+        <Marker key={`${currentMarker.id}`} position={[currentMarker.lat, currentMarker.lng]}>
           <Popup>
             <form>
               <input
@@ -56,36 +68,33 @@ class App extends React.Component {
                 onChange={(e) => {
                   this.setCurrentMarkerField("treename", e.target.value);
                 }}
-              >
-              {this.state.currentMarker.treename}
-              </input>
+                value={currentMarker.treename}
+              />
               <input
                 type="text"
                 placeholder="Age"
                 onChange={(e) => {
                   this.setCurrentMarkerField("age", e.target.value);
                 }}
-              >
-              {this.state.currentMarker.age}
-              </input>
+                value={currentMarker.age}
+              />
               <input
                 type="text"
                 placeholder="Tree Crown Radius"
                 onChange={(e) => {
                   this.setCurrentMarkerField("crownRadius", e.target.value );
                 }}
-              >
-              {this.state.currentMarker.crownRadius}
-              </input>
-              <input
-                type="file"
-                placeholder="Photo"
-                onChange={(e) => {
-                  this.setCurrentMarkerField("photo", e.target.value);
-                }}
-              >
-              {this.state.currentMarker.photo}
-              </input>
+                value={currentMarker.crownRadius}
+              />
+              {/*<input*/}
+              {/*  type="file"*/}
+              {/*  placeholder="Photo"*/}
+              {/*  onChange={(e) => {*/}
+              {/*    this.setCurrentMarkerField("photo", e.target.value);*/}
+              {/*  }}*/}
+              {/*>*/}
+              {/*{currentMarker.photo}*/}
+              {/*</input>*/}
               <button type="submit" onClick={this.handleSubmit}>
                 Submit
               </button>
@@ -97,7 +106,7 @@ class App extends React.Component {
         </Marker>
       );
     }
-    return null;
+    return <div/>;
   }
 
   //fetch funtion to get data and set it to state
@@ -135,29 +144,48 @@ class App extends React.Component {
       treename: newTree.plant_type,
       age: newTree.creation_year,
       crownRadius: newTree.core_radius,
-      photo: null
+      photo: ""
     }
+    console.log('creating new tree')
+    console.log(newTree)
     this.setState({
       markers: [...this.state.markers, myNewMarker],
       currentMarker: null
     })
+    console.log('new state markers')
+    console.log(this.state.markers)
   }
 
   handleSubmit = (e) => {
+    e.preventDefault();
+    const cm = this.state.currentMarker
+    console.log('cm')
+    console.log(cm)
     if(this.state.currentMarker) {
+      console.log('saving marker')
       const m = this.state.currentMarker
-      const newTree = createTree(m.lat, m.lng, m.treename, m.age, m.crownRadius)
-      this.addTree(newTree)
+      createTree(parseFloat(m.lat), parseFloat(m.lng), m.treename, parseInt(m.age), parseInt(m.crownRadius), this.addTree)
     } else {
       alert("Please click on the map to add a marker")
     }
   }
 
   refreshMarkers = (e) => {
+    e.preventDefault();
     const lat = this.refs.map.leafletElement.getCenter().lat;
     const lng = this.refs.map.leafletElement.getCenter().lng;
-    const newMarkers = getMarkers(lat, lng, defaultRadius);
-    this.setState({ markers: newMarkers });
+    const inSetMarkers = (newTrees) => {
+      if (!newTrees) {
+        newTrees = []
+        for (let i = 0; i < newTrees.length; i++) {
+          this.addTree(newTrees[i]);
+        }
+      }
+      ;
+      console.log(newTrees);
+    }
+    this.setState({markers: []});
+    getMarkers(lat, lng, defaultRadius, inSetMarkers);
   };
 
   render() {
@@ -176,51 +204,51 @@ class App extends React.Component {
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"
           />
-          {this.getCurrentMarker()}
-          {this.state.markers.map((position, idx) => (
-            <Marker key={`marker-${idx}`} position={position}>
-              <Popup>
-                <form>
-                  {" "}
-                  {/*this.state.popup.map((it, index) => {})*/}
-                  <input
-                    type="text"
-                    placeholder="Enter a treename"
-                    onChange={(e) => {
-                      this.setState({ treename: e.target.value });
-                    }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Age"
-                    onChange={(e) => {
-                      this.setState({ age: e.target.value });
-                    }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Tree Crown Radius"
-                    onChange={(e) => {
-                      this.setState({ crownRadius: e.target.value });
-                    }}
-                  />
-                  <input
-                    type="file"
-                    placeholder="Photo"
-                    onChange={(e) => {
-                      this.setState({ photo: e.target.value });
-                    }}
-                  />
-                  <button type="submit" onClick={this.handleSubmit}>
-                    Submit
-                  </button>
-                  <button type="submit" onClick={this.handleDelete}>
-                    Delete
-                  </button>
-                </form>
-              </Popup>
-            </Marker>
-          ))}
+          {this.getCurrentMarker(this.state.currentMarker)}
+          {this.state.markers.map(marker => this.getCurrentMarker(marker))}
+            {/*<Marker key={`marker-${marker.id}`} position={[marker.lat, marker.lng]}>*/}
+            {/*  <Popup>*/}
+            {/*    <form>*/}
+            {/*      {" "}*/}
+            {/*      /!*this.state.popup.map((it, index) => {})*!/*/}
+            {/*      <input*/}
+            {/*        type="text"*/}
+            {/*        placeholder="Enter a treename"*/}
+            {/*        onChange={(e) => {*/}
+            {/*      this.setCurrentMarkerField("treename", e.target.value );*/}
+            {/*        }}*/}
+            {/*      />*/}
+            {/*      <input*/}
+            {/*        type="text"*/}
+            {/*        placeholder="Age"*/}
+            {/*        onChange={(e) => {*/}
+            {/*      this.setCurrentMarkerField("age", e.target.value );*/}
+            {/*        }}*/}
+            {/*      />*/}
+            {/*      <input*/}
+            {/*        type="text"*/}
+            {/*        placeholder="Tree Crown Radius"*/}
+            {/*        onChange={(e) => {*/}
+            {/*      this.setCurrentMarkerField("crownRadius", e.target.value );*/}
+            {/*        }}*/}
+            {/*      />*/}
+            {/*      /!*<input*!/*/}
+            {/*      /!*  type="file"*!/*/}
+            {/*      /!*  placeholder="Photo"*!/*/}
+            {/*      /!*  onChange={(e) => {*!/*/}
+            {/*      /!*    this.setState({ photo: e.target.value });*!/*/}
+            {/*      /!*  }}*!/*/}
+            {/*      />*/}
+            {/*      <button type="submit" onClick={this.handleSubmit}>*/}
+            {/*        Submit*/}
+            {/*      </button>*/}
+            {/*      <button type="submit" onClick={this.handleDelete}>*/}
+            {/*        Delete*/}
+            {/*      </button>*/}
+            {/*    </form>*/}
+            {/*  </Popup>*/}
+            {/*</Marker>*/}
+          {/*))}*/}
         </Map>
       </div>
     );

@@ -12,8 +12,8 @@ const getDefaultPagenation = () => {
   };
 };
 
-export function cheatToken(){
-    fetch(`${baseUrl}0/auth/token`, {
+export async function cheatToken(){
+    let data = await fetch(`${baseUrl}/auth/token`, {
         method: 'POST',
         headers: {
             'Authorization': 'Basic ' + btoa('username:password'),
@@ -24,20 +24,19 @@ export function cheatToken(){
             `username=root&password=root`
     })
         .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data);
-        }).then(
-            (data) => {return data}
-        )
+        .then((data) => {return data})
         .catch((error) => {
             console.error('Error:', error);
         });
+
+    return data;
 }
 
-export function handleDelete() {
-  const token = cheatToken().token
+export async function handleDelete() {
+    const result = [];
+  const token = await cheatToken().access_token
   console.log(token);
-  fetch(`${baseUrl}/user/user`, {
+  await fetch(`${baseUrl}/user/user`, {
     method: "DELETE",
     headers: {
       Authorization: "Bearer " + token,
@@ -47,10 +46,12 @@ export function handleDelete() {
     .then((response) => response.json())
     .then((data) => {
       console.log("Success:", data);
+      result.push(data)
     })
     .catch((error) => {
       console.error("Error:", error);
     });
+  return result[0];
 }
 
 export function createUser(email, password, name, surname, description) {
@@ -75,38 +76,46 @@ export function createUser(email, password, name, surname, description) {
     });
 }
 
-export function createTree(lat, lng, treename, age, crownRadius) {
-    const cheats = cheatToken()
-    fetch(`${baseUrl}/tree/create`, {
+export async function createTree(lat, lng, treename, age, crownRadius, fn_to_apply) {
+    console.log('getting cheats')
+    const cheats = await cheatToken()
+    console.log('cheats')
+    console.log(cheats)
+    console.log(`${baseUrl}/tree/create`)
+    const my_token = cheats.access_token
+    console.log(my_token)
+    console.log(crownRadius)
+    console.log(parseInt(cheats.user.id))
+    await fetch(`${baseUrl}/tree/create`, {
       method: "POST",
       headers: {
-        Authorization: "Bearer " + cheats.token,
+        Authorization: "Bearer " + my_token,
         "Content-Type": "application/json",
         // 'Content-Type': 'application/json',
       },
     
       body: JSON.stringify({
-        location_lat: `${lat}`,
-        location_lon: `${lng}`,
-        core_radius: `${crownRadius}`,
+        location_lat: lat,
+        location_lon: lng,
+        core_radius: crownRadius,
         creation_year: age,
         plant_type: `${treename}`,
-        creator_id: cheats.user.id
+        creator_id: parseInt(cheats.user.id)
       }),
     })
       .then((response) => response.json())
-      .then((data) => {return data})
+      .then((data) => {fn_to_apply(data)})
       .catch((error) => {
         console.error("Error:", error);
       });
   }
 
-  export function deleteTree(id) {
-      const cheats = cheatToken()
+  export async function deleteTree(id) {
+      const cheats = await cheatToken()
       fetch(`${baseUrl}/tree/delete`, {
         method: "DELETE",
         headers: {
-          Authorization: "Bearer " + cheats.token,
+          Authorization: "Bearer " + cheats.access_token,
           "Content-Type": "application/json",
           // 'Content-Type': 'application/json',
         },
@@ -121,8 +130,8 @@ export function createTree(lat, lng, treename, age, crownRadius) {
         });
     }
 
-export function handleMe() {
-  const token = cheatToken().token
+export async function handleMe() {
+  const token = (await cheatToken()).access_token
   console.log(token);
   fetch(`${baseUrl}/auth/me`, {
     method: "GET",
@@ -140,7 +149,7 @@ export function handleMe() {
     });
 }
 
-export function getMarkers(lat, lng, radius) {
+export async function getMarkers(lat, lng, radius, fn_to_apply) {
   const pagenation = getDefaultPagenation();
   pagenation["ignore_pagination"] = true;
   const geo = {
@@ -148,8 +157,11 @@ export function getMarkers(lat, lng, radius) {
     location_lon: lng,
     search_radius: radius,
   };
-  fetch(`${baseUrl}/tree/search`, {
-    method: "GET",
+  const my_url = `${baseUrl}/tree/search`
+    console.log('wtf')
+    console.log(my_url)
+  fetch(my_url, {
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
@@ -160,8 +172,7 @@ export function getMarkers(lat, lng, radius) {
   })
     .then((response) => response.json())
     .then((data) => {
-      console.log("Success:", data);
-      return data;
+      fn_to_apply(data)
     })
     .catch((error) => {
       console.error("Error:", error);

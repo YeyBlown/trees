@@ -5,7 +5,9 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi_sqlalchemy import DBSessionMiddleware
 
-from fastapi.middleware.cors import CORSMiddleware #cors
+# from fastapi.middleware.cors import CORSMiddleware #cors
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware as CORSMiddleware  # noqa
 from fastapi_sqlalchemy import db
 
 from adapters.contract import PostgresEnv, AppEnv
@@ -15,16 +17,17 @@ from models.schema import User as SchemaUser
 from controllers import auth, tree, api, user
 from models.schema import Roles
 
-app = FastAPI()
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins=['*'],
+        allow_credentials=True,
+        allow_methods=['*'],
+        allow_headers=['*']
+    )
+]
 
-origins = ["*"]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = FastAPI(middleware=middleware)
 
 app.include_router(auth.router)
 app.include_router(tree.router)
