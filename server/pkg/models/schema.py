@@ -57,7 +57,6 @@ class TreeCreate(BaseModel):
     should_be_removed: bool = False
 
     # technical for backend
-    time_created: datetime.datetime
     creator_id: int
 
     class Config:
@@ -101,6 +100,7 @@ class PaginatedSearch(BaseModel):
     page_size: int = 10
     sort_by: str = 'id'
     asc_order: bool = True
+    ignore_pagination = False
 
 
 class Roles(Enum):

@@ -288,7 +288,7 @@ class _TreeDBAdapter:
     def get_paginated_trees_from_cursor(trees_cursor, paginated_search: PaginatedSearch):
         # TODO: utilize tree search(tree details, flags, etc.)
         # TODO: do i need this fucking regex?
-        if paginated_search.page_size is not None:
+        if not paginated_search.ignore_pagination:
             res = trees_cursor.filter(ModelTree.username.regexp_match(paginated_search.query)).\
                 order_by(asc(paginated_search.sort_by) if paginated_search.asc_order else desc(paginated_search.sort_by)).\
                 limit(paginated_search.page_size).offset(paginated_search.page * paginated_search.page_size)
